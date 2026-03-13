@@ -1,1 +1,28 @@
+from __future__ import annotations
+
+import pandas as pd
+
+
+def preprocess_credit(df: pd.DataFrame, target_column: str) -> tuple[pd.DataFrame, pd.Series]:
+    df = df.copy()
+    df = df.drop_duplicates()
+
+    # Fill missing numeric values
+    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+    for col in numeric_cols:
+        if col != target_column:
+            df[col] = df[col].fillna(df[col].median())
+
+    # Fill missing categorical values and one-hot encode
+    categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+    for col in categorical_cols:
+        df[col] = df[col].fillna("unknown")
+
+    if categorical_cols:
+        df = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
+
+    y = df[target_column]
+    X = df.drop(columns=[target_column])
+
+    return X, y
 
